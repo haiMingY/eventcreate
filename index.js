@@ -171,21 +171,24 @@
     remove: function(type, listener) {
       if (checkType(type) && isFunction(listener)) {
         _listenerCache.remove(type, listener);
+        _dateCache.delete(type);
       }
     },
     removeAll: function(type) {
       if (checkType(type)) {
         _listenerCache.removeAll(type);
+        _dateCache.delete(type);
       }
     },
     once: function(type, listener) {
       if (checkType(type) && isFunction(listener)) {
         var flags = false;
+        var self = this;
         function t() {
           if (!flags) {
             flags = true;
             listener.apply(null, arguments);
-            this.remove(type, t);
+            self.remove(type, t);
           }
         }
         this.on(type, t);
