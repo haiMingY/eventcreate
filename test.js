@@ -4,7 +4,6 @@ function test(a) {
   console.log(a);
 }
 EventListener.on('test', test);
-EventListener.on('test', test);
 EventListener.emit('test', 1);
 
 EventListener.emit('before', 'before');
@@ -24,5 +23,5 @@ function once(once) {
 }
 
 EventListener.once('once', once);
-EventListener.emit('once', 1);
 EventListener.emit('once', 2);
+EventListener.emit('once', 1);

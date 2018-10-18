@@ -1,10 +1,10 @@
-(function(root, factory) {
+(function (root, factory) {
   if (typeof exports === 'object' && typeof module === 'object')
     module.exports = factory();
   else if (typeof define === 'function' && define.amd) define([], factory);
   else if (typeof exports === 'object') exports['EventListener'] = factory();
   else root['EventListener'] = factory();
-})(this, function() {
+})(this, function () {
   'use strict';
   var toString = Object.prototype.toString;
   Array.isArray =
@@ -37,7 +37,7 @@
      * @param {String | Symbol} type
      * @returns Boolean
      */
-    include: function(type) {
+    include: function (type) {
       return Array.isArray(this.cache[type]);
     },
     /**
@@ -45,7 +45,7 @@
      * @param {String | Symbol} type
      * @param {any} param
      */
-    set: function(type, param) {
+    set: function (type, param) {
       if (this.include(type)) {
         this.cache[type].push(param);
         return false;
@@ -59,7 +59,7 @@
      * @param {String | Symbol} type
      * @param {any} param
      */
-    remove: function(type, param) {
+    remove: function (type, param) {
       if (this.include(type)) {
         var datas = this.cache[type];
         var index = datas.indexOf(param);
@@ -77,31 +77,19 @@
         delete this.cache[type];
       }
     },
-    get: function(type) {
+    get: function (type) {
       return this.cache[type];
     }
   };
 
-  function listenerCache() {
-    // Cache all listeners
-    this.cache = new ECache();
-  }
-
-  listenerCache.prototype.include = function(type) {
-    return this.cache.include(type);
+  function listenerCache() {}
+  listenerCache.prototype = new ECache();
+  listenerCache.prototype.on = function (type, listener) {
+    return this.set(type, listener);
   };
-  listenerCache.prototype.on = function(type, listener) {
-    return this.cache.set(type, listener);
-  };
-  listenerCache.prototype.remove = function(type, listener) {
-    this.cache.remove(type, listener);
-  };
-  listenerCache.prototype.removeAll = function(type) {
-    this.cache.removeAll(type);
-  };
-  listenerCache.prototype.emit = function(type /**,...args */) {
-    if (this.cache.include(type)) {
-      var listeners = this.cache.get(type);
+  listenerCache.prototype.emit = function (type /**,...args */) {
+    if (this.include(type)) {
+      var listeners = this.get(type);
       for (var index = 0; index < listeners.length; index++) {
         var listener = listeners[index];
         if (isFunction(listener)) {
@@ -111,32 +99,26 @@
     }
   };
 
-  function dateCache() {
-    this.cache = new ECache();
+  function dateCache() {}
+  dateCache.prototype = new ECache()
+  dateCache.prototype.on = function (type, data) {
+    this.set(type, data);
   }
-
-  dateCache.prototype = {
-    include: function(type) {
-      return this.cache.include(type);
-    },
-    on: function(type, data) {
-      this.cache.set(type, data);
-    },
-    emit: function(type, listener) {
-      if (this.cache.include(type)) {
-        var datas = this.cache.get(type);
-        if (Array.isArray(datas)) {
-          for (let index = 0; index < datas.length; index++) {
-            var data = datas[index];
-            data && listener.apply(null, data);
-          }
+  dateCache.prototype.emit = function (type, listener) {
+    if (this.include(type)) {
+      var datas = this.get(type);
+      if (Array.isArray(datas)) {
+        for (let index = 0; index < datas.length; index++) {
+          var data = datas[index];
+          data && listener.apply(null, data);
         }
       }
-    },
-    delete: function(type) {
-      this.cache.removeAll(type);
     }
-  };
+  }
+  dateCache.prototype.delete = function (type) {
+    this.removeAll(type);
+  }
+  // };
   var _listenerCache = new listenerCache();
   var _dateCache = new dateCache();
   var Event = {
@@ -146,7 +128,7 @@
      * @param {Function} listener
      * @returns is the first time added
      */
-    on: function(type, listener) {
+    on: function (type, listener) {
       if (checkType(type)) {
         if (!isFunction(listener)) {
           throw new Error('listener nust be a function');
@@ -159,7 +141,7 @@
         }
       }
     },
-    emit: function(type /**,args */) {
+    emit: function (type /**,args */) {
       if (checkType(type)) {
         if (_listenerCache.include(type)) {
           _listenerCache.emit.apply(_listenerCache, arguments);
@@ -168,19 +150,19 @@
         }
       }
     },
-    remove: function(type, listener) {
+    remove: function (type, listener) {
       if (checkType(type) && isFunction(listener)) {
         _listenerCache.remove(type, listener);
         _dateCache.delete(type);
       }
     },
-    removeAll: function(type) {
+    removeAll: function (type) {
       if (checkType(type)) {
         _listenerCache.removeAll(type);
         _dateCache.delete(type);
       }
     },
-    once: function(type, listener) {
+    once: function (type, listener) {
       if (checkType(type) && isFunction(listener)) {
         var flags = false;
         var self = this;
